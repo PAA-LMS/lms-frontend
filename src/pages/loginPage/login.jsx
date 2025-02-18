@@ -58,6 +58,9 @@ const LoginPage = () => {
         <p className="forgot-password">
           <a href="#" className="forgot-password-link">Forgot Password?</a>
         </p>
+        <p className="create-account">
+          Don't have an account? <a href="#" className="create-account-link">Create Account</a>
+        </p>
       </div>
     </div>
   );
