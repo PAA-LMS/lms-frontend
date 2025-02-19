@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import "./signup.css"; // Import the CSS file
+import "./signup.css";
+import { Link } from "react-router-dom";
 
 const SignupPage = () => {
     const [formData, setFormData] = useState({
@@ -86,7 +87,7 @@ const SignupPage = () => {
                     <button type="submit" className="signup-button">Sign Up</button>
                 </form>
                 <p className="already-account">
-                    Already have an account? <a href="" className="login-link">Login</a>
+                    Already have an account? <Link to="/login" className="login-link">Login</Link>
                 </p>
             </div>
         </div>
