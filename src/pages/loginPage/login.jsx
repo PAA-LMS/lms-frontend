@@ -19,51 +19,54 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-form">
-        <h2 className="login-header">Welcome to Third Space Global</h2>
-        <form onSubmit={handleSubmit} className="login-form-elements">
-          <div className="form-group">
-            <label htmlFor="email" className="label-text">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className="input-field"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password" className="label-text">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-              className="input-field"
-            />
-          </div>
-          <button
-            type="submit"
-            className="login-button"
-          >
-            Login
-          </button>
-        </form>
-        <p className="forgot-password">
-          <a href="#" className="forgot-password-link">Forgot Password?</a>
-        </p>
-        <p className="create-account">
-          Don't have an account? <Link to="/Signup" className="create-account-link">Create Account</Link>
-        </p>
-      </div>
-    </div >
+    <div className="login-page">
+      <div className="banner"></div>
+      <div className="login-container">
+        <div className="login-form">
+          <h2 className="login-header">Welcome to Third Space Global</h2>
+          <form onSubmit={handleSubmit} className="login-form-elements">
+            <div className="form-group">
+              <label htmlFor="email" className="label-text">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+                className="input-field"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password" className="label-text">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+                className="input-field"
+              />
+            </div>
+            <button
+              type="submit"
+              className="login-button"
+            >
+              Login
+            </button>
+          </form>
+          <p className="forgot-password">
+            <a href="#" className="forgot-password-link">Forgot Password?</a>
+          </p>
+          <p className="create-account">
+            Don't have an account? <Link to="/Signup" className="create-account-link">Create Account</Link>
+          </p>
+        </div>
+      </div >
+    </div>
   );
 };
 
