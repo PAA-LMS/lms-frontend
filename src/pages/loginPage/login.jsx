@@ -60,7 +60,7 @@ const LoginPage = () => {
           <a href="#" className="forgot-password-link">Forgot Password?</a>
         </p>
         <p className="create-account">
-          Don't have an account? <Link to="/" className="create-account-link">Create Account</Link>
+          Don't have an account? <Link to="/Signup" className="create-account-link">Create Account</Link>
         </p>
       </div>
     </div >
