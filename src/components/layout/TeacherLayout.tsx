@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, ReactNode } from 'react';
 import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, IconButton, List, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery, Button } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -18,7 +18,11 @@ const menuItems = [
   { text: 'Study Materials', icon: <BookIcon />, path: '/teacher/materials' },
 ];
 
-const TeacherLayout: React.FC = () => {
+interface TeacherLayoutProps {
+  children?: ReactNode;
+}
+
+const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -145,7 +149,7 @@ const TeacherLayout: React.FC = () => {
           mt: '64px',
         }}
       >
-        <Outlet />
+        {children ? children : <Outlet />}
       </Box>
     </Box>
   );

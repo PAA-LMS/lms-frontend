@@ -15,13 +15,16 @@ import {
   CircularProgress,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  Tooltip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import ArticleIcon from '@mui/icons-material/Article';
 import { coursesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // Define the Course type
 interface Course {
@@ -47,6 +50,7 @@ const CoursesList: React.FC = () => {
   const [message, setMessage] = useState({ text: '', severity: 'success' as 'success' | 'error' });
   
   const { isLecturer } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCourses();
@@ -137,6 +141,10 @@ const CoursesList: React.FC = () => {
     }
   };
 
+  const handleManageMaterials = (courseId: number) => {
+    navigate(`/teacher/course/${courseId}/materials`);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -202,6 +210,15 @@ const CoursesList: React.FC = () => {
                     >
                       <DeleteIcon />
                     </IconButton>
+                    <Tooltip title="Manage Course Materials">
+                      <IconButton 
+                        color="secondary" 
+                        onClick={() => handleManageMaterials(course.id)}
+                        aria-label="manage course materials"
+                      >
+                        <ArticleIcon />
+                      </IconButton>
+                    </Tooltip>
                   </CardActions>
                 )}
               </Card>

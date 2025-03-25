@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -9,101 +9,414 @@ import {
   ListItemText,
   ListItemButton,
   TextField,
+  Card,
+  CardContent,
+  CardActions,
   IconButton,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   Breadcrumbs,
   Link,
   Grid,
+  CircularProgress,
+  Alert,
+  Divider,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
   Description as FileIcon,
-  PictureAsPdf as PdfIcon,
-  VideoLibrary as VideoIcon,
-  Image as ImageIcon,
+  Class as ClassIcon,
+  InsertDriveFile as DriveIcon,
+  Link as LinkIcon,
   Search as SearchIcon,
-  CheckCircle as CheckCircleIcon,
-  RadioButtonUnchecked as UncheckedIcon,
   NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
-// Dummy data for demonstration
-const materials = {
-  'Week 1': {
-    'Lecture Notes': [
-      { id: 1, name: 'Introduction to Mathematics', type: 'pdf', completed: true },
-      { id: 2, name: 'Basic Concepts', type: 'pdf', completed: false },
-    ],
-    'Videos': [
-      { id: 3, name: 'Lecture 1.1', type: 'video', completed: true },
-      { id: 4, name: 'Lecture 1.2', type: 'video', completed: false },
-    ],
-    'Assignments': [
-      { id: 5, name: 'Problem Set 1', type: 'pdf', completed: true },
-    ],
-  },
-  'Week 2': {
-    'Lecture Notes': [
-      { id: 6, name: 'Advanced Topics', type: 'pdf', completed: false },
-    ],
-    'Videos': [
-      { id: 7, name: 'Lecture 2.1', type: 'video', completed: false },
-    ],
-  },
-};
+interface Course {
+  id: number;
+  title: string;
+  description: string | null;
+  lecturer_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CourseWeek {
+  id: number;
+  course_id: number;
+  title: string;
+  description: string;
+  week_number: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface CourseMaterial {
+  id: number;
+  week_id: number;
+  title: string;
+  description: string;
+  material_type: string;
+  content: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 const StudyMaterials: React.FC = () => {
+  const { user } = useAuth();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [courseWeeks, setCourseWeeks] = useState<CourseWeek[]>([]);
+  const [selectedWeek, setSelectedWeek] = useState<CourseWeek | null>(null);
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPath, setCurrentPath] = useState<string[]>([]);
-  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
-  const [openDialog, setOpenDialog] = useState(false);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCourse) {
+      fetchCourseWeeks(selectedCourse.id);
+    } else {
+      setCourseWeeks([]);
+      setSelectedWeek(null);
+      setMaterials([]);
+    }
+  }, [selectedCourse]);
+
+  useEffect(() => {
+    if (selectedWeek) {
+      fetchCourseMaterials(selectedWeek.id);
+    } else {
+      setMaterials([]);
+    }
+  }, [selectedWeek]);
+
+  const fetchCourses = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:8000/courses/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCourses(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setError('Failed to load courses. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourseWeeks = async (courseId: number) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:8000/course-weeks/course/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      // Sort weeks by week_number
+      const sortedWeeks = response.data.sort(
+        (a: CourseWeek, b: CourseWeek) => a.week_number - b.week_number
+      );
+      
+      setCourseWeeks(sortedWeeks);
+      setSelectedWeek(null);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching course weeks:', err);
+      setError('Failed to load course weeks. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourseMaterials = async (weekId: number) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:8000/course-materials/week/${weekId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMaterials(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching course materials:', err);
+      setError('Failed to load course materials. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCourseClick = (course: Course) => {
+    setSelectedCourse(course);
+  };
+
+  const handleBackToCourses = () => {
+    setSelectedCourse(null);
+  };
+
+  const handleWeekClick = (week: CourseWeek) => {
+    setSelectedWeek(week);
+  };
+
+  const handleBackToWeeks = () => {
+    setSelectedWeek(null);
+  };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
   };
 
-  const handleFolderClick = (folder: string) => {
-    setCurrentPath([...currentPath, folder]);
-  };
-
-  const handleFileClick = (material: any) => {
-    setSelectedMaterial(material);
-    setOpenDialog(true);
-  };
-
-  const handleBreadcrumbClick = (index: number) => {
-    setCurrentPath(currentPath.slice(0, index + 1));
-  };
-
-  const getCurrentContent = () => {
-    let content = materials;
-    for (const path of currentPath) {
-      content = content[path];
+  // Render functions
+  const renderCoursesList = () => {
+    if (loading && courses.length === 0) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
     }
-    return content;
+
+    if (error && courses.length === 0) {
+      return (
+        <Alert severity="error" sx={{ my: 2 }}>
+          {error}
+        </Alert>
+      );
+    }
+
+    const filteredCourses = courses.filter(course => 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (course.description && course.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    if (filteredCourses.length === 0) {
+      return (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            No courses found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {searchQuery ? 'Try a different search term.' : 'You are not enrolled in any courses yet.'}
+          </Typography>
+        </Paper>
+      );
+    }
+
+    return (
+      <Grid container spacing={3}>
+        {filteredCourses.map((course) => (
+          <Grid item xs={12} sm={6} md={4} key={course.id}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3,
+                },
+                cursor: 'pointer'
+              }}
+              onClick={() => handleCourseClick(course)}
+            >
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <ClassIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6" component="h2">
+                    {course.title}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  {course.description || 'No description available'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
   };
 
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case 'pdf':
-        return <PdfIcon />;
-      case 'video':
-        return <VideoIcon />;
-      case 'image':
-        return <ImageIcon />;
-      default:
-        return <FileIcon />;
+  const renderWeeksList = () => {
+    if (!selectedCourse) return null;
+
+    if (loading && courseWeeks.length === 0) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    const filteredWeeks = courseWeeks.filter(week => 
+      week.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      week.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return (
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToCourses}
+            sx={{ mr: 2 }}
+          >
+            Back to Courses
+          </Button>
+          <Typography variant="h5" component="h1" sx={{ flexGrow: 1 }}>
+            {selectedCourse.title} - Weeks
+          </Typography>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ my: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {filteredWeeks.length === 0 ? (
+          <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="h6" gutterBottom>
+              No weeks found
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchQuery ? 'Try a different search term.' : 'No weeks have been added to this course yet.'}
+            </Typography>
+          </Paper>
+        ) : (
+          <Grid container spacing={2}>
+            {filteredWeeks.map((week) => (
+              <Grid item xs={12} sm={6} md={4} key={week.id}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6">
+                      {week.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {week.description || 'No description available'}
+                    </Typography>
+                  </CardContent>
+                  <CardActions>
+                    <Button 
+                      size="small" 
+                      variant="contained"
+                      onClick={() => handleWeekClick(week)}
+                      sx={{ mr: 1 }}
+                    >
+                      View Materials
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
+    );
+  };
+
+  const renderMaterialsList = () => {
+    if (!selectedCourse || !selectedWeek) return null;
+
+    if (loading && materials.length === 0) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    const filteredMaterials = materials.filter(material => 
+      material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      material.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return (
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWeeks}
+            sx={{ mr: 2 }}
+          >
+            Back to Weeks
+          </Button>
+          <Typography variant="h5" component="h1" sx={{ flexGrow: 1 }}>
+            {selectedCourse.title} - {selectedWeek.title}
+          </Typography>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ my: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {filteredMaterials.length === 0 ? (
+          <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="h6" gutterBottom>
+              No materials found
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchQuery ? 'Try a different search term.' : 'No materials have been added to this week yet.'}
+            </Typography>
+          </Paper>
+        ) : (
+          <Grid container spacing={2}>
+            {filteredMaterials.map((material) => (
+              <Grid item xs={12} key={material.id}>
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      {material.material_type === 'link' ? (
+                        <LinkIcon color="primary" sx={{ mr: 1 }} />
+                      ) : (
+                        <DriveIcon color="primary" sx={{ mr: 1 }} />
+                      )}
+                      <Typography variant="h6">{material.title}</Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {material.description}
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      href={material.content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open Material
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
+    );
+  };
+
+  const renderContent = () => {
+    if (selectedWeek && selectedCourse) {
+      return renderMaterialsList();
+    } else if (selectedCourse) {
+      return renderWeeksList();
+    } else {
+      return renderCoursesList();
     }
   };
-
-  const filteredContent = Object.entries(getCurrentContent()).filter(([name]) =>
-    name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <Box>
@@ -130,98 +443,9 @@ const StudyMaterials: React.FC = () => {
         </Grid>
       </Paper>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
-          <Link
-            component="button"
-            variant="body1"
-            onClick={() => setCurrentPath([])}
-            underline="hover"
-            color="inherit"
-          >
-            Home
-          </Link>
-          {currentPath.map((path, index) => (
-            <Link
-              key={path}
-              component="button"
-              variant="body1"
-              onClick={() => handleBreadcrumbClick(index)}
-              underline="hover"
-              color="inherit"
-            >
-              {path}
-            </Link>
-          ))}
-        </Breadcrumbs>
-      </Paper>
-
-      <Paper>
-        <List>
-          {filteredContent.map(([name, content]) => (
-            <ListItem key={name} disablePadding>
-              <ListItemButton
-                onClick={() => {
-                  if (Array.isArray(content)) {
-                    handleFileClick({ name, ...content[0] });
-                  } else {
-                    handleFolderClick(name);
-                  }
-                }}
-              >
-                <ListItemIcon>
-                  {Array.isArray(content) ? getFileIcon(content[0].type) : <FolderIcon />}
-                </ListItemIcon>
-                <ListItemText
-                  primary={name}
-                  secondary={
-                    Array.isArray(content) && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <Chip
-                          icon={content[0].completed ? <CheckCircleIcon /> : <UncheckedIcon />}
-                          label={content[0].completed ? 'Completed' : 'Not Completed'}
-                          size="small"
-                          color={content[0].completed ? 'success' : 'default'}
-                        />
-                      </Box>
-                    )
-                  }
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
-
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedMaterial?.name}
-        </DialogTitle>
-        <DialogContent>
-          {selectedMaterial && (
-            <Box sx={{ pt: 2 }}>
-              <Typography variant="body1" gutterBottom>
-                Type: {selectedMaterial.type.toUpperCase()}
-              </Typography>
-              <Typography variant="body1">
-                Status: {selectedMaterial.completed ? 'Completed' : 'Not Completed'}
-              </Typography>
-              {/* Add preview component based on file type */}
-              <Box sx={{ mt: 2, height: 400, bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
-                  Preview not available
-                </Typography>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Close</Button>
-          <Button variant="contained" color="primary">
-            Download
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Divider sx={{ my: 2 }} />
+      
+      {renderContent()}
     </Box>
   );
 };

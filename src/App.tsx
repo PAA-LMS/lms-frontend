@@ -17,6 +17,7 @@ import StudyMaterials from './pages/student/StudyMaterials';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import TeacherCourseManagement from './pages/teacher/CourseManagement';
 import TeacherStudyMaterials from './pages/teacher/StudyMaterials';
+import TeacherCourseMaterials from './pages/teacher/CourseMaterials';
 import LoginPage from './pages/loginPage/login';
 import SignupPage from './pages/signupPage/signup';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -212,6 +213,7 @@ const AppRoutes: React.FC = () => {
         <Route index element={<TeacherDashboard />} />
         <Route path="courses" element={<TeacherCourseManagement />} />
         <Route path="materials" element={<TeacherStudyMaterials />} />
+        <Route path="course/:courseId/materials" element={<TeacherCourseMaterials />} />
       </Route>
 
       {/* Fallback route */}
