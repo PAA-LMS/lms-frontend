@@ -17,6 +17,9 @@ import StudyMaterials from './pages/student/StudyMaterials';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import TeacherCourseManagement from './pages/teacher/CourseManagement';
 import TeacherStudyMaterials from './pages/teacher/StudyMaterials';
+import LoginPage from './pages/loginPage/login';
+import SignupPage from './pages/signupPage/signup';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 const theme = createTheme({
   palette: {
@@ -138,40 +141,93 @@ const theme = createTheme({
   },
 });
 
+// Protected route component
+interface ProtectedRouteProps {
+  element: React.ReactElement;
+  requiredRole?: string;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element, requiredRole }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requiredRole && user?.role !== requiredRole) {
+    // Redirect to appropriate dashboard based on role
+    if (user?.role === 'lecturer') {
+      return <Navigate to="/teacher" replace />;
+    } else if (user?.role === 'student') {
+      return <Navigate to="/student" replace />;
+    } else {
+      return <Navigate to="/admin" replace />;
+    }
+  }
+
+  return element;
+};
+
+const AppRoutes: React.FC = () => {
+  const { isAuthenticated, isLecturer, isStudent } = useAuth();
+
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={isAuthenticated ? (
+        isLecturer ? <Navigate to="/teacher" replace /> : 
+        isStudent ? <Navigate to="/student" replace /> : 
+        <Navigate to="/admin" replace />
+      ) : <LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/*" element={<ProtectedRoute element={<AdminLayout />} />}>
+        <Route index element={<Dashboard />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="courses" element={<CourseManagement />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="security" element={<Security />} />
+      </Route>
+
+      {/* Student Routes */}
+      <Route 
+        path="/student/*" 
+        element={<ProtectedRoute element={<StudentLayout />} requiredRole="student" />}
+      >
+        <Route index element={<StudentDashboard />} />
+        <Route path="courses" element={<CourseCatalog />} />
+        <Route path="materials" element={<StudyMaterials />} />
+      </Route>
+
+      {/* Teacher/Lecturer Routes */}
+      <Route 
+        path="/teacher/*" 
+        element={<ProtectedRoute element={<TeacherLayout />} requiredRole="lecturer" />}
+      >
+        <Route index element={<TeacherDashboard />} />
+        <Route path="courses" element={<TeacherCourseManagement />} />
+        <Route path="materials" element={<TeacherStudyMaterials />} />
+      </Route>
+
+      {/* Fallback route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/*" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="courses" element={<CourseManagement />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="security" element={<Security />} />
-          </Route>
-
-          {/* Student Routes */}
-          <Route path="/student/*" element={<StudentLayout />}>
-            <Route index element={<StudentDashboard />} />
-            <Route path="courses" element={<CourseCatalog />} />
-            <Route path="materials" element={<StudyMaterials />} />
-          </Route>
-
-          {/* Teacher Routes */}
-          <Route path="/teacher/*" element={<TeacherLayout />}>
-            <Route index element={<TeacherDashboard />} />
-            <Route path="courses" element={<TeacherCourseManagement />} />
-            <Route path="materials" element={<TeacherStudyMaterials />} />
-          </Route>
-
-          {/* Default route redirects to student dashboard */}
-          <Route path="/" element={<Navigate to="/student" replace />} />
-        </Routes>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
       </Router>
     </ThemeProvider>
   );

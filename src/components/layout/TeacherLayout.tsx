@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, IconButton, List, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery } from '@mui/material';
+import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, IconButton, List, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery, Button } from '@mui/material';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   School as SchoolIcon,
   Book as BookIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const drawerWidth = 240;
 
@@ -22,9 +24,15 @@ const TeacherLayout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout, user } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   const drawer = (
@@ -45,6 +53,11 @@ const TeacherLayout: React.FC = () => {
             <ListItemText primary={item.text} />
           </ListItemButton>
         ))}
+        
+        <ListItemButton onClick={handleLogout}>
+          <ListItemIcon><LogoutIcon /></ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItemButton>
       </List>
     </div>
   );
@@ -59,19 +72,36 @@ const TeacherLayout: React.FC = () => {
           ml: { sm: `${drawerWidth}px` },
         }}
       >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Teacher Dashboard'}
-          </Typography>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: 'none' } }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" noWrap component="div">
+              {menuItems.find(item => item.path === location.pathname)?.text || 'Teacher Dashboard'}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {user && (
+              <Typography variant="body1" sx={{ mr: 2 }}>
+                {user.username} ({user.role})
+              </Typography>
+            )}
+            <Button 
+              color="inherit" 
+              startIcon={<LogoutIcon />}
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box

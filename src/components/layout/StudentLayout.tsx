@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
+import { useAuth } from '../../context/AuthContext';
 
 const drawerWidth = 280;
 
@@ -41,6 +42,7 @@ const StudentLayout: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout, user } = useAuth();
 
   // Dummy notifications data
   const notifications = [
@@ -65,6 +67,11 @@ const StudentLayout: React.FC = () => {
 
   const handleNotificationClose = () => {
     setAnchorEl(null);
+  };
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   const drawer = (
@@ -106,6 +113,7 @@ const StudentLayout: React.FC = () => {
       <Divider />
       <List sx={{ px: 2, py: 1 }}>
         <ListItemButton
+          onClick={handleLogout}
           sx={{
             borderRadius: 2,
             color: theme.palette.error.main,
@@ -152,9 +160,18 @@ const StudentLayout: React.FC = () => {
               <NotificationsIcon />
             </Badge>
           </IconButton>
-          <IconButton sx={{ ml: 1, color: 'text.primary' }}>
-            <Avatar sx={{ width: 32, height: 32 }}>S</Avatar>
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+            {user && (
+              <Typography variant="body2" sx={{ mr: 1, color: 'text.primary' }}>
+                {user.username}
+              </Typography>
+            )}
+            <IconButton sx={{ color: 'text.primary' }}>
+              <Avatar sx={{ width: 32, height: 32 }}>
+                {user?.username?.charAt(0).toUpperCase() || 'S'}
+              </Avatar>
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box
