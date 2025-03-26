@@ -85,7 +85,7 @@ export const coursesAPI = {
     const response = await api.get('/courses/my-courses');
     return response.data;
   },
-  
+
   getCourseById: async (courseId: number) => {
     const response = await api.get(`/courses/${courseId}`);
     return response.data;
