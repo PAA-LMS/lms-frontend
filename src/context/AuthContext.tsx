@@ -21,7 +21,7 @@ type User = {
   username: string;
   first_name: string | null;
   last_name: string | null;
-  role: 'lecturer' | 'student';
+  role: 'lecturer' | 'student' | 'admin';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -34,6 +34,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLecturer: boolean;
   isStudent: boolean;
+  isAdmin: boolean;
   loading: boolean;
   error: string | null;
   login: (username: string, password: string) => Promise<User>;
@@ -120,6 +121,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Check if it's one of our test accounts with predefined roles
         role: (username === 'lecturer') ? 'lecturer' : 
               (username === 'student') ? 'student' : 
+              (username === 'admin') ? 'admin' :
               'student', // Default to student if unknown
         is_active: true,
         created_at: new Date().toISOString(),
@@ -163,12 +165,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isAuthenticated = !!user;
   const isLecturer = user?.role === 'lecturer';
   const isStudent = user?.role === 'student';
+  const isAdmin = user?.role === 'admin';
 
   const value = {
     user,
     isAuthenticated,
     isLecturer,
     isStudent,
+    isAdmin,
     loading,
     error,
     login,

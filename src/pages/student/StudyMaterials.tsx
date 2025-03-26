@@ -20,6 +20,10 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -29,6 +33,7 @@ import {
   Link as LinkIcon,
   Search as SearchIcon,
   NavigateNext as NavigateNextIcon,
+  Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -63,6 +68,18 @@ interface CourseMaterial {
   updated_at?: string;
 }
 
+interface AssignmentSubmission {
+  id?: number;
+  assignment_id: number;
+  student_id?: number;
+  submission_url: string;
+  submitted_at?: string;
+  updated_at?: string;
+  status?: string;
+  grade?: string;
+  feedback?: string;
+}
+
 const StudyMaterials: React.FC = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -75,6 +92,14 @@ const StudyMaterials: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Assignment submission states
+  const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<CourseMaterial | null>(null);
+  const [submissionUrl, setSubmissionUrl] = useState('');
+  const [submissionLoading, setSubmissionLoading] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [currentSubmission, setCurrentSubmission] = useState<AssignmentSubmission | null>(null);
 
   useEffect(() => {
     fetchCourses();
@@ -156,6 +181,33 @@ const StudyMaterials: React.FC = () => {
     }
   };
 
+  const fetchAssignmentSubmission = async (assignmentId: number) => {
+    setSubmissionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:8000/assignments/material/${assignmentId}/my-submission`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setCurrentSubmission(response.data);
+      setSubmissionUrl(response.data.submission_url);
+      setSubmissionError(null);
+    } catch (err) {
+      console.error('Error fetching submission:', err);
+      // If 404, it means no submission exists yet
+      if (err.response && err.response.status === 404) {
+        setCurrentSubmission(null);
+        setSubmissionUrl('');
+      } else {
+        setSubmissionError('Failed to load your submission. Please try again.');
+      }
+    } finally {
+      setSubmissionLoading(false);
+    }
+  };
+
   const handleCourseClick = (course: Course) => {
     setSelectedCourse(course);
   };
@@ -174,6 +226,85 @@ const StudyMaterials: React.FC = () => {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
+  };
+
+  // Assignment submission handlers
+  const handleOpenSubmissionDialog = (assignment: CourseMaterial) => {
+    setSelectedAssignment(assignment);
+    setSubmissionUrl('');
+    setSubmissionError(null);
+    fetchAssignmentSubmission(assignment.id);
+    setSubmissionDialogOpen(true);
+  };
+
+  const handleCloseSubmissionDialog = () => {
+    setSubmissionDialogOpen(false);
+    setSelectedAssignment(null);
+    setCurrentSubmission(null);
+  };
+
+  const handleSubmissionUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSubmissionUrl(event.target.value);
+  };
+
+  const handleSubmitAssignment = async () => {
+    if (!selectedAssignment || !submissionUrl) return;
+
+    setSubmissionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://localhost:8000/assignments/submit',
+        {
+          assignment_id: selectedAssignment.id,
+          submission_url: submissionUrl,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      // Refresh the submission
+      fetchAssignmentSubmission(selectedAssignment.id);
+      
+      // Close the dialog
+      handleCloseSubmissionDialog();
+    } catch (err) {
+      console.error('Error submitting assignment:', err);
+      setSubmissionError('Failed to submit your assignment. Please try again.');
+    } finally {
+      setSubmissionLoading(false);
+    }
+  };
+
+  // Helper function to get material type icon
+  const getMaterialTypeIcon = (type: string) => {
+    switch (type) {
+      case 'link':
+        return <LinkIcon color="primary" sx={{ mr: 1 }} />;
+      case 'drive_url':
+      case 'gdrive':
+        return <DriveIcon color="primary" sx={{ mr: 1 }} />;
+      case 'assignment':
+        return <AssignmentIcon color="primary" sx={{ mr: 1 }} />;
+      default:
+        return <DriveIcon color="primary" sx={{ mr: 1 }} />;
+    }
+  };
+
+  // Helper function to get material type label
+  const getMaterialTypeLabel = (type: string) => {
+    switch (type) {
+      case 'link':
+        return 'Web Link';
+      case 'drive_url':
+      case 'gdrive':
+        return 'Google Drive';
+      case 'assignment':
+        return 'Assignment';
+      default:
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    }
   };
 
   // Render functions
@@ -379,15 +510,14 @@ const StudyMaterials: React.FC = () => {
                 <Card>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      {material.material_type === 'link' ? (
-                        <LinkIcon color="primary" sx={{ mr: 1 }} />
-                      ) : (
-                        <DriveIcon color="primary" sx={{ mr: 1 }} />
-                      )}
+                      {getMaterialTypeIcon(material.material_type)}
                       <Typography variant="h6">{material.title}</Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {material.description}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                      Type: {getMaterialTypeLabel(material.material_type)}
                     </Typography>
                     <Button
                       variant="outlined"
@@ -396,14 +526,102 @@ const StudyMaterials: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Open Material
+                      {material.material_type === 'assignment' ? 'View Assignment' : 'Open Material'}
                     </Button>
+                    
+                    {/* If this is an assignment, add button to submit work */}
+                    {material.material_type === 'assignment' && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        color="primary"
+                        sx={{ ml: 1 }}
+                        onClick={() => handleOpenSubmissionDialog(material)}
+                      >
+                        Submit Assignment
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
             ))}
           </Grid>
         )}
+
+        {/* Assignment Submission Dialog */}
+        <Dialog open={submissionDialogOpen} onClose={handleCloseSubmissionDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            {selectedAssignment ? `Submit Assignment: ${selectedAssignment.title}` : 'Submit Assignment'}
+          </DialogTitle>
+          <DialogContent>
+            {submissionLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <>
+                {submissionError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {submissionError}
+                  </Alert>
+                )}
+                
+                {currentSubmission && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    You have already submitted this assignment. Status: {currentSubmission.status}
+                    {currentSubmission.grade && (
+                      <Typography component="div">
+                        Grade: {currentSubmission.grade}
+                      </Typography>
+                    )}
+                    {currentSubmission.feedback && (
+                      <Typography component="div">
+                        Feedback: {currentSubmission.feedback}
+                      </Typography>
+                    )}
+                  </Alert>
+                )}
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Please upload your assignment to Google Drive and paste the link below:
+                </Typography>
+                
+                <TextField
+                  fullWidth
+                  label="Google Drive URL"
+                  variant="outlined"
+                  value={submissionUrl}
+                  onChange={handleSubmissionUrlChange}
+                  placeholder="https://drive.google.com/file/d/..."
+                  sx={{ mb: 2 }}
+                />
+                
+                {selectedAssignment && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href={selectedAssignment.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ mb: 2 }}
+                  >
+                    View Assignment Instructions
+                  </Button>
+                )}
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseSubmissionDialog}>Cancel</Button>
+            <Button 
+              onClick={handleSubmitAssignment} 
+              variant="contained"
+              disabled={!submissionUrl || submissionLoading}
+            >
+              Submit
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   };

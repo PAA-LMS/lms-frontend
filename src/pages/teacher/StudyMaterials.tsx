@@ -30,6 +30,13 @@ import {
   Snackbar,
   Tabs,
   Tab,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Link,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -74,6 +81,28 @@ interface CourseMaterial {
   updated_at?: string;
 }
 
+interface StudentSubmission {
+  id: number;
+  assignment_id: number;
+  student_id: number;
+  submission_url: string;
+  submitted_at: string;
+  updated_at: string;
+  status: string;
+  grade: string | null;
+  feedback: string | null;
+  student?: {
+    id: number;
+    user_id: number;
+    enrollment_number: string;
+    user?: {
+      first_name: string;
+      last_name: string;
+      email: string;
+    }
+  };
+}
+
 const StudyMaterials: React.FC = () => {
   const { isLecturer } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -104,10 +133,26 @@ const StudyMaterials: React.FC = () => {
     content: '',
   });
   
+  // Filter states
+  const [materialTypeFilter, setMaterialTypeFilter] = useState<string>('all');
+  
   // Alert state
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
+
+  // Submissions states
+  const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<CourseMaterial | null>(null);
+  const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+
+  // Grading states
+  const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<StudentSubmission | null>(null);
+  const [gradeValue, setGradeValue] = useState('');
+  const [feedbackValue, setFeedbackValue] = useState('');
 
   useEffect(() => {
     fetchCourses();
@@ -437,6 +482,127 @@ const StudyMaterials: React.FC = () => {
     setAlertOpen(false);
   };
 
+  // Helper function to get material type icon
+  const getMaterialTypeIcon = (type: string) => {
+    switch (type) {
+      case 'link':
+        return <LinkIcon color="primary" sx={{ mr: 1 }} />;
+      case 'drive_url':
+      case 'gdrive':
+        return <DriveIcon color="primary" sx={{ mr: 1 }} />;
+      case 'assignment':
+        return <FolderIcon color="primary" sx={{ mr: 1 }} />;  // Use appropriate assignment icon
+      default:
+        return <DriveIcon color="primary" sx={{ mr: 1 }} />;
+    }
+  };
+
+  // Helper function to get material type label
+  const getMaterialTypeLabel = (type: string) => {
+    switch (type) {
+      case 'link':
+        return 'Web Link';
+      case 'drive_url':
+      case 'gdrive':
+        return 'Google Drive';
+      case 'assignment':
+        return 'Assignment';
+      default:
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+  };
+
+  // Submissions handlers
+  const handleViewSubmissions = async (assignment: CourseMaterial) => {
+    if (assignment.material_type !== 'assignment') return;
+    
+    setSelectedAssignment(assignment);
+    setLoadingSubmissions(true);
+    setSubmissionsError(null);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:8000/assignments/material/${assignment.id}/submissions`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSubmissions(response.data);
+    } catch (err) {
+      console.error('Error fetching submissions:', err);
+      setSubmissionsError('Failed to load submissions. Please try again.');
+    } finally {
+      setLoadingSubmissions(false);
+    }
+    
+    setSubmissionsDialogOpen(true);
+  };
+
+  const handleCloseSubmissionsDialog = () => {
+    setSubmissionsDialogOpen(false);
+    setSelectedAssignment(null);
+    setSubmissions([]);
+  };
+
+  const handleOpenGradingDialog = (submission: StudentSubmission) => {
+    setSelectedSubmission(submission);
+    setGradeValue(submission.grade || '');
+    setFeedbackValue(submission.feedback || '');
+    setGradingDialogOpen(true);
+  };
+
+  const handleCloseGradingDialog = () => {
+    setGradingDialogOpen(false);
+    setSelectedSubmission(null);
+  };
+
+  const handleGradeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGradeValue(e.target.value);
+  };
+
+  const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFeedbackValue(e.target.value);
+  };
+
+  const handleSubmitGrade = async () => {
+    if (!selectedSubmission) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `http://localhost:8000/assignments/submissions/${selectedSubmission.id}`,
+        {
+          grade: gradeValue,
+          feedback: feedbackValue,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      // Update submission in the list
+      setSubmissions(submissions.map(sub => 
+        sub.id === selectedSubmission.id 
+          ? { ...sub, grade: gradeValue, feedback: feedbackValue, status: 'graded' } 
+          : sub
+      ));
+      
+      // Close the dialog
+      handleCloseGradingDialog();
+      
+      // Show success message
+      setAlertMessage('Submission graded successfully!');
+      setAlertSeverity('success');
+      setAlertOpen(true);
+    } catch (err) {
+      console.error('Error grading submission:', err);
+      setAlertMessage('Failed to grade submission. Please try again.');
+      setAlertSeverity('error');
+      setAlertOpen(true);
+    }
+  };
+
   // Render functions
   const renderCoursesList = () => {
     if (loading && courses.length === 0) {
@@ -609,6 +775,11 @@ const StudyMaterials: React.FC = () => {
       );
     }
 
+    // Add filter for material types
+    const filteredMaterials = materialTypeFilter === 'all' 
+      ? materials 
+      : materials.filter(material => material.material_type === materialTypeFilter);
+
     return (
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -622,6 +793,22 @@ const StudyMaterials: React.FC = () => {
           <Typography variant="h5" component="h1" sx={{ flexGrow: 1 }}>
             {selectedCourse.title} - {selectedWeek.title}
           </Typography>
+          
+          {/* Add filter dropdown */}
+          <FormControl size="small" sx={{ width: 150, mr: 2 }}>
+            <InputLabel>Material Type</InputLabel>
+            <Select
+              value={materialTypeFilter}
+              label="Material Type"
+              onChange={(e) => setMaterialTypeFilter(e.target.value)}
+            >
+              <MenuItem value="all">All Types</MenuItem>
+              <MenuItem value="drive_url">Google Drive</MenuItem>
+              <MenuItem value="link">Web Link</MenuItem>
+              <MenuItem value="assignment">Assignment</MenuItem>
+            </Select>
+          </FormControl>
+          
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -637,32 +824,33 @@ const StudyMaterials: React.FC = () => {
           </Alert>
         )}
 
-        {materials.length === 0 ? (
+        {filteredMaterials.length === 0 ? (
           <Paper sx={{ p: 3, textAlign: 'center' }}>
             <Typography variant="h6" gutterBottom>
               No materials found
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Add materials such as Google Drive links for this week.
+              {materialTypeFilter === 'all' 
+                ? 'Add materials such as Google Drive links for this week.'
+                : `No ${getMaterialTypeLabel(materialTypeFilter).toLowerCase()} materials found in this week.`}
             </Typography>
-      </Paper>
+          </Paper>
         ) : (
-      <Grid container spacing={2}>
-            {materials.map((material) => (
+          <Grid container spacing={2}>
+            {filteredMaterials.map((material) => (
               <Grid item xs={12} key={material.id}>
                 <Card>
                   <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      {material.material_type === 'link' ? (
-                        <LinkIcon color="primary" sx={{ mr: 1 }} />
-                      ) : (
-                        <DriveIcon color="primary" sx={{ mr: 1 }} />
-                      )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      {getMaterialTypeIcon(material.material_type)}
                       <Typography variant="h6">{material.title}</Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {material.description}
-                </Typography>
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                      Type: {getMaterialTypeLabel(material.material_type)}
+                    </Typography>
                     <Button
                       variant="outlined"
                       size="small"
@@ -670,17 +858,30 @@ const StudyMaterials: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Open Material
+                      {material.material_type === 'assignment' ? 'View Assignment' : 'Open Material'}
                     </Button>
+                    
+                    {/* If this is an assignment, add button to view submissions */}
+                    {isLecturer && material.material_type === 'assignment' && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="secondary"
+                        sx={{ ml: 1 }}
+                        onClick={() => handleViewSubmissions(material)}
+                      >
+                        View Submissions
+                      </Button>
+                    )}
                   </CardContent>
                   <CardActions>
-                <IconButton
+                    <IconButton
                       color="primary" 
-                  size="small"
+                      size="small"
                       onClick={() => handleOpenEditMaterialDialog(material)}
-                >
+                    >
                       <EditIcon />
-                </IconButton>
+                    </IconButton>
                     <IconButton 
                       color="error" 
                       size="small"
@@ -690,9 +891,9 @@ const StudyMaterials: React.FC = () => {
                     </IconButton>
                   </CardActions>
                 </Card>
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
         )}
       </Box>
     );
@@ -779,7 +980,7 @@ const StudyMaterials: React.FC = () => {
             margin="dense"
             name="title"
             label="Title"
-              fullWidth
+            fullWidth
             variant="outlined"
             value={materialForm.title}
             onChange={handleMaterialFormChange}
@@ -788,41 +989,196 @@ const StudyMaterials: React.FC = () => {
           <TextField
             margin="dense"
             name="description"
-              label="Description"
+            label="Description"
             fullWidth
             variant="outlined"
-              multiline
-              rows={3}
+            multiline
+            rows={3}
             value={materialForm.description}
             onChange={handleMaterialFormChange}
-              sx={{ mb: 2 }}
-            />
+            sx={{ mb: 2 }}
+          />
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Material Type</InputLabel>
-              <Select
+            <Select
               name="material_type"
               value={materialForm.material_type}
               label="Material Type"
-              onChange={(e) => handleMaterialFormChange({ target: { name: 'material_type', value: e.target.value } })}
+              onChange={handleMaterialFormChange}
             >
               <MenuItem value="drive_url">Google Drive</MenuItem>
               <MenuItem value="link">Web Link</MenuItem>
-              </Select>
-            </FormControl>
+              <MenuItem value="assignment">Assignment</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             margin="dense"
             name="content"
-            label={materialForm.material_type === 'link' ? 'URL' : 'Google Drive Link'}
+            label={
+              materialForm.material_type === 'link' 
+                ? 'URL' 
+                : materialForm.material_type === 'assignment'
+                  ? 'Google Drive URL for Assignment PDF'
+                  : 'Google Drive Link'
+            }
             fullWidth
             variant="outlined"
             value={materialForm.content}
             onChange={handleMaterialFormChange}
+            helperText={
+              materialForm.material_type === 'assignment' 
+                ? 'Provide a Google Drive URL to the assignment document that students will access' 
+                : ''
+            }
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseMaterialDialog}>Cancel</Button>
           <Button onClick={handleSubmitMaterial} variant="contained">
             {dialogMode === 'add' ? 'Add' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Submissions Dialog */}
+      <Dialog 
+        open={submissionsDialogOpen} 
+        onClose={handleCloseSubmissionsDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedAssignment ? `Submissions for: ${selectedAssignment.title}` : 'Submissions'}
+        </DialogTitle>
+        <DialogContent>
+          {loadingSubmissions ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              {submissionsError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {submissionsError}
+                </Alert>
+              )}
+              
+              {submissions.length === 0 ? (
+                <Typography color="text.secondary" sx={{ textAlign: 'center', my: 3 }}>
+                  No submissions found for this assignment.
+                </Typography>
+              ) : (
+                <TableContainer component={Paper} sx={{ mt: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Student ID</TableCell>
+                        <TableCell>Submission Date</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {submissions.map((submission) => (
+                        <TableRow key={submission.id}>
+                          <TableCell>{submission.student_id}</TableCell>
+                          <TableCell>
+                            {new Date(submission.submitted_at).toLocaleString()}
+                          </TableCell>
+                          <TableCell>{submission.status}</TableCell>
+                          <TableCell>{submission.grade || 'Not graded'}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              href={submission.submission_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{ mr: 1 }}
+                            >
+                              View Submission
+                            </Button>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              color="primary"
+                              onClick={() => handleOpenGradingDialog(submission)}
+                            >
+                              Grade
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSubmissionsDialog}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Grading Dialog */}
+      <Dialog
+        open={gradingDialogOpen}
+        onClose={handleCloseGradingDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Grade Submission</DialogTitle>
+        <DialogContent>
+          {selectedSubmission && (
+            <>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2">Submission Link:</Typography>
+                <Link 
+                  href={selectedSubmission.submission_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {selectedSubmission.submission_url}
+                </Link>
+              </Box>
+              
+              <TextField
+                margin="dense"
+                name="grade"
+                label="Grade"
+                fullWidth
+                variant="outlined"
+                value={gradeValue}
+                onChange={handleGradeChange}
+                placeholder="A, B, C, D, or numeric grade"
+                sx={{ mb: 2 }}
+              />
+              
+              <TextField
+                margin="dense"
+                name="feedback"
+                label="Feedback"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={4}
+                value={feedbackValue}
+                onChange={handleFeedbackChange}
+                placeholder="Provide feedback to the student"
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseGradingDialog}>Cancel</Button>
+          <Button 
+            onClick={handleSubmitGrade}
+            variant="contained"
+            color="primary"
+          >
+            Submit Grade
           </Button>
         </DialogActions>
       </Dialog>

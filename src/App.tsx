@@ -20,6 +20,7 @@ import TeacherStudyMaterials from './pages/teacher/StudyMaterials';
 import TeacherCourseMaterials from './pages/teacher/CourseMaterials';
 import LoginPage from './pages/loginPage/login';
 import SignupPage from './pages/signupPage/signup';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const theme = createTheme({
@@ -165,8 +166,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element, requiredRole }
       return <Navigate to="/teacher" replace />;
     } else if (user?.role === 'student') {
       return <Navigate to="/student" replace />;
-    } else {
+    } else if (user?.role === 'admin') {
       return <Navigate to="/admin" replace />;
+    } else {
+      return <Navigate to="/" replace />;
     }
   }
 
@@ -188,7 +191,7 @@ const AppRoutes: React.FC = () => {
       
       {/* Admin Routes */}
       <Route path="/admin/*" element={<ProtectedRoute element={<AdminLayout />} />}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="courses" element={<CourseManagement />} />
         <Route path="analytics" element={<Analytics />} />
