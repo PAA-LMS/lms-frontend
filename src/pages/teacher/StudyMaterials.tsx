@@ -49,6 +49,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { coursesAPI } from '../../services/api';
 import TeacherLayout from '../../components/layout/TeacherLayout';
 
 interface Course {
@@ -179,11 +180,8 @@ const StudyMaterials: React.FC = () => {
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8000/courses/my-courses', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCourses(response.data);
+      const data = await coursesAPI.getLecturerCourses();
+      setCourses(data);
       setError(null);
     } catch (err) {
       console.error('Error fetching courses:', err);
