@@ -9,6 +9,7 @@ import {
   Notifications as NotificationsIcon,
   Person as PersonIcon,
   Logout as LogoutIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
@@ -53,8 +54,9 @@ const StudentLayout: React.FC = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/student' },
-    { text: 'Course Catalog', icon: <SchoolIcon />, path: '/student/courses' },
     { text: 'Study Materials', icon: <BookIcon />, path: '/student/materials' },
+    { text: 'Exams', icon: <AssignmentIcon />, path: '/student/exams' },
+    { text: 'Tuition Fee', icon: <PaymentIcon />, path: '/student/tuition' },
   ];
 
   const handleDrawerToggle = () => {

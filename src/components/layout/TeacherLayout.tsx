@@ -6,6 +6,7 @@ import {
   School as SchoolIcon,
   Book as BookIcon,
   Logout as LogoutIcon,
+  Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +17,7 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/teacher' },
   { text: 'Course Management', icon: <SchoolIcon />, path: '/teacher/courses' },
   { text: 'Study Materials', icon: <BookIcon />, path: '/teacher/materials' },
+  { text: 'Exams', icon: <AssignmentIcon />, path: '/teacher/exams' },
 ];
 
 interface TeacherLayoutProps {

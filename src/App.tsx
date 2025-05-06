@@ -14,10 +14,13 @@ import Login from './pages/Login';
 import StudentDashboard from './pages/student/Dashboard';
 import CourseCatalog from './pages/student/CourseCatalog';
 import StudyMaterials from './pages/student/StudyMaterials';
+import TuitionFee from './pages/student/TuitionFee';
+import StudentExams from './pages/student/Exams';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import TeacherCourseManagement from './pages/teacher/CourseManagement';
 import TeacherStudyMaterials from './pages/teacher/StudyMaterials';
 import TeacherCourseMaterials from './pages/teacher/CourseMaterials';
+import TeacherExams from './pages/teacher/Exams';
 import LoginPage from './pages/loginPage/login';
 import SignupPage from './pages/signupPage/signup';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -192,10 +195,6 @@ const AppRoutes: React.FC = () => {
       {/* Admin Routes */}
       <Route path="/admin/*" element={<ProtectedRoute element={<AdminLayout />} />}>
         <Route index element={<AdminDashboard />} />
-        <Route path="users" element={<UserManagement />} />
-        <Route path="courses" element={<CourseManagement />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="security" element={<Security />} />
       </Route>
 
       {/* Student Routes */}
@@ -206,6 +205,8 @@ const AppRoutes: React.FC = () => {
         <Route index element={<StudentDashboard />} />
         <Route path="courses" element={<CourseCatalog />} />
         <Route path="materials" element={<StudyMaterials />} />
+        <Route path="exams" element={<StudentExams />} />
+        <Route path="tuition" element={<TuitionFee />} />
       </Route>
 
       {/* Teacher/Lecturer Routes */}
@@ -217,6 +218,7 @@ const AppRoutes: React.FC = () => {
         <Route path="courses" element={<TeacherCourseManagement />} />
         <Route path="materials" element={<TeacherStudyMaterials />} />
         <Route path="course/:courseId/materials" element={<TeacherCourseMaterials />} />
+        <Route path="exams" element={<TeacherExams />} />
       </Route>
 
       {/* Fallback route */}
