@@ -105,6 +105,64 @@ export const coursesAPI = {
     const response = await api.delete(`/courses/${courseId}`);
     return response.data;
   },
+  
+  getCourseWeeks: async (courseId: number) => {
+    const response = await api.get(`/courses/${courseId}/weeks`);
+    return response.data;
+  },
+  
+  getMaterialsForWeek: async (weekId: number) => {
+    const response = await api.get(`/weeks/${weekId}/materials`);
+    return response.data;
+  }
+};
+
+// Exams API
+export const examsAPI = {
+  getAllExams: async () => {
+    const response = await api.get('/exams/');
+    return response.data;
+  },
+  
+  getCourseExams: async (courseId: number) => {
+    const response = await api.get(`/exams/course/${courseId}`);
+    return response.data;
+  },
+  
+  getExamById: async (examId: number) => {
+    const response = await api.get(`/exams/${examId}`);
+    return response.data;
+  },
+  
+  createExam: async (examData: any) => {
+    const response = await api.post('/exams/', examData);
+    return response.data;
+  },
+  
+  updateExam: async (examId: number, examData: any) => {
+    const response = await api.put(`/exams/${examId}`, examData);
+    return response.data;
+  },
+  
+  deleteExam: async (examId: number) => {
+    const response = await api.delete(`/exams/${examId}`);
+    return response.data;
+  },
+  
+  submitExam: async (examId: number, answers: any) => {
+    const response = await api.post(`/exams/${examId}/submit`, answers);
+    return response.data;
+  },
+  
+  getExamSubmissions: async (examId: number) => {
+    const response = await api.get(`/exams/${examId}/submissions`);
+    return response.data;
+  },
+  
+  checkSubmissionStatus: async (examId: number) => {
+    const response = await api.get(`/exams/${examId}/submission-status`);
+    return response.data;
+  }
 };
 
 export default api; 

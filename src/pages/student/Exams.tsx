@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  Grid,
   Button,
   TextField,
   Dialog,
@@ -20,75 +17,156 @@ import {
   Paper,
   Chip,
   IconButton,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
+import { examsAPI, coursesAPI } from '../../services/api';
+import { format } from 'date-fns';
 
 interface Exam {
-  id: string;
-  courseName: string;
+  id: number;
   title: string;
   description: string;
-  examUrl: string;
-  dueDate: string;
-  status: 'pending' | 'submitted' | 'graded';
-  grade?: string;
-  feedback?: string;
+  course_name: string;
+  exam_url: string;
+  due_date: string;
+  status: string;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Course {
+  id: number;
+  title: string;
+}
+
+interface ExamWithCourse extends Exam {
+  courseName: string;
+  submitted?: boolean;
+}
+
+interface ExamSubmission {
+  submission_url: string;
 }
 
 const Exams: React.FC = () => {
   const [openSubmitDialog, setOpenSubmitDialog] = useState(false);
-  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
-  const [submissionUrl, setSubmissionUrl] = useState('');
+  const [selectedExam, setSelectedExam] = useState<ExamWithCourse | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [exams, setExams] = useState<ExamWithCourse[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const [exams, setExams] = useState<Exam[]>([
-    {
-      id: '1',
-      courseName: 'Mathematics 101',
-      title: 'Midterm Exam',
-      description: 'Covers chapters 1-5',
-      examUrl: 'https://drive.google.com/...',
-      dueDate: '2024-03-20',
-      status: 'pending',
-    },
-    {
-      id: '2',
-      courseName: 'Physics 101',
-      title: 'Final Exam',
-      description: 'Comprehensive exam covering all topics',
-      examUrl: 'https://drive.google.com/...',
-      dueDate: '2024-04-15',
-      status: 'graded',
-      grade: 'A',
-      feedback: 'Excellent work!',
-    },
-  ]);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const handleSubmitExam = () => {
-    if (selectedExam) {
-      setExams(exams.map(exam => 
-        exam.id === selectedExam.id 
-          ? { ...exam, status: 'submitted' }
-          : exam
-      ));
-      setOpenSubmitDialog(false);
-      setSubmissionUrl('');
-      setSelectedExam(null);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch all courses first
+      const coursesData = await coursesAPI.getAllCourses();
+      setCourses(coursesData);
+      
+      // Fetch all exams from each course and combine them
+      let allExams: ExamWithCourse[] = [];
+      
+      for (const course of coursesData) {
+        try {
+          const courseExams = await examsAPI.getCourseExams(course.id);
+          
+          // Add course name to each exam and check submission status
+          const examsWithCourse = await Promise.all(courseExams.map(async (exam: Exam) => {
+            // Check if exam is already submitted
+            let submitted = false;
+            try {
+              const submissionStatus = await examsAPI.checkSubmissionStatus(exam.id);
+              submitted = submissionStatus.submitted;
+            } catch (error) {
+              console.error(`Error checking submission status for exam ${exam.id}:`, error);
+            }
+            
+            return {
+              ...exam,
+              courseName: course.title,
+              submitted: submitted
+            };
+          }));
+          
+          allExams = [...allExams, ...examsWithCourse];
+        } catch (error) {
+          console.error(`Error fetching exams for course ${course.id}:`, error);
+        }
+      }
+      
+      setExams(allExams);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load exams. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'submitted':
-        return 'info';
-      case 'graded':
-        return 'success';
-      default:
-        return 'default';
+  const handleSubmitExam = async () => {
+    if (selectedExam && answers['submission_url']) {
+      setLoading(true);
+      try {
+        const submission: ExamSubmission = {
+          submission_url: answers['submission_url']
+        };
+        
+        await examsAPI.submitExam(selectedExam.id, submission);
+        
+        setSuccess('Exam submitted successfully!');
+        setOpenSubmitDialog(false);
+        setAnswers({});
+        setSelectedExam(null);
+        
+        // Refresh the exams list
+        fetchData();
+      } catch (err) {
+        console.error('Error submitting exam:', err);
+        setError('Failed to submit exam. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setError('Please provide a submission URL');
+    }
+  };
+
+  const getStatusColor = (dueDate: string, status: string) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    
+    if (status === 'active' && now < due) {
+      return 'success'; // Active
+    } else if (status === 'active' && now >= due) {
+      return 'error'; // Expired
+    } else {
+      return 'info'; // Other status
+    }
+  };
+
+  const getStatus = (dueDate: string, status: string) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    
+    if (status === 'active' && now < due) {
+      return 'Active';
+    } else if (status === 'active' && now >= due) {
+      return 'Expired';
+    } else {
+      return status.charAt(0).toUpperCase() + status.slice(1); // Capitalize status
     }
   };
 
@@ -98,70 +176,90 @@ const Exams: React.FC = () => {
         Exams
       </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Course</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Grade</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {exams.map((exam) => (
-              <TableRow key={exam.id}>
-                <TableCell>{exam.courseName}</TableCell>
-                <TableCell>{exam.title}</TableCell>
-                <TableCell>{exam.dueDate}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={exam.status}
-                    color={getStatusColor(exam.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{exam.grade || '-'}</TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => window.open(exam.examUrl, '_blank')}
-                  >
-                    <VisibilityIcon />
-                  </IconButton>
-                  {exam.status === 'pending' && (
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => {
-                        setSelectedExam(exam);
-                        setOpenSubmitDialog(true);
-                      }}
-                    >
-                      <UploadIcon />
-                    </IconButton>
-                  )}
-                </TableCell>
+      {loading && <CircularProgress />}
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {success}
+        </Alert>
+      )}
+
+      {!loading && exams.length === 0 ? (
+        <Alert severity="info">No exams available at this time.</Alert>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Course</TableCell>
+                <TableCell>Title</TableCell>
+                <TableCell>Due Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {exams.map((exam) => (
+                <TableRow key={exam.id}>
+                  <TableCell>{exam.courseName}</TableCell>
+                  <TableCell>{exam.title}</TableCell>
+                  <TableCell>{format(new Date(exam.due_date), 'MMM dd, yyyy HH:mm')}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={exam.submitted ? 'Submitted' : getStatus(exam.due_date, exam.status)}
+                      color={exam.submitted ? 'info' : getStatusColor(exam.due_date, exam.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {exam.exam_url && (
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                          window.open(exam.exam_url, '_blank');
+                        }}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    )}
+                    {getStatus(exam.due_date, exam.status) === 'Active' && !exam.submitted && (
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                          setSelectedExam(exam);
+                          setOpenSubmitDialog(true);
+                        }}
+                      >
+                        <UploadIcon />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Dialog
         open={openSubmitDialog}
         onClose={() => {
           setOpenSubmitDialog(false);
           setSelectedExam(null);
-          setSubmissionUrl('');
+          setAnswers({});
         }}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Submit Exam</DialogTitle>
+        <DialogTitle>Submit Exam: {selectedExam?.title}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
@@ -170,12 +268,19 @@ const Exams: React.FC = () => {
             <Typography variant="body2" color="text.secondary" paragraph>
               {selectedExam?.description}
             </Typography>
+            
+            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+              Submission
+            </Typography>
+            
             <TextField
-              label="Submission URL (Google Drive)"
+              label="Google Drive Link"
               fullWidth
-              value={submissionUrl}
-              onChange={(e) => setSubmissionUrl(e.target.value)}
+              value={answers['submission_url'] || ''}
+              onChange={(e) => setAnswers({...answers, 'submission_url': e.target.value})}
               margin="normal"
+              placeholder="Paste your Google Drive link with your completed exam here"
+              helperText="Make sure your document is accessible to viewers with the link"
             />
           </Box>
         </DialogContent>
@@ -184,7 +289,7 @@ const Exams: React.FC = () => {
             onClick={() => {
               setOpenSubmitDialog(false);
               setSelectedExam(null);
-              setSubmissionUrl('');
+              setAnswers({});
             }}
           >
             Cancel
@@ -192,9 +297,9 @@ const Exams: React.FC = () => {
           <Button
             onClick={handleSubmitExam}
             variant="contained"
-            disabled={!submissionUrl}
+            disabled={loading || !answers['submission_url']}
           >
-            Submit
+            {loading ? <CircularProgress size={24} /> : 'Submit'}
           </Button>
         </DialogActions>
       </Dialog>

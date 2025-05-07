@@ -22,9 +22,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ArticleIcon from '@mui/icons-material/Article';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { coursesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 
 // Define the Course type
 interface Course {
@@ -34,6 +36,25 @@ interface Course {
   lecturer_id: number;
   created_at: string;
   updated_at: string;
+}
+
+// Define Week type
+interface Week {
+  id: number;
+  title: string;
+  description: string;
+  week_number: number;
+  course_id: number;
+  materials?: Material[];
+}
+
+// Define Material type
+interface Material {
+  id: number;
+  title: string;
+  description: string;
+  material_type: string;
+  content: string;
 }
 
 const CoursesList: React.FC = () => {
@@ -145,6 +166,81 @@ const CoursesList: React.FC = () => {
     navigate(`/teacher/course/${courseId}/materials`);
   };
 
+  // Function to generate PDF report
+  const generateReport = async () => {
+    setLoading(true);
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.text('Course Management Report', 105, 15, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 22, { align: 'center' });
+      
+      // Add courses information
+      let yPos = 30;
+      
+      for (const course of courses) {
+        // Don't exceed page limits
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 15;
+        }
+        
+        doc.setFontSize(16);
+        doc.text(`Course: ${course.title}`, 14, yPos);
+        yPos += 7;
+        
+        doc.setFontSize(12);
+        doc.text(`Description: ${course.description || 'No description'}`, 14, yPos);
+        yPos += 7;
+        
+        doc.text(`Created: ${new Date(course.created_at).toLocaleDateString()}`, 14, yPos);
+        yPos += 7;
+        
+        // Get course stats or details
+        try {
+          const weeks = await coursesAPI.getCourseWeeks(course.id);
+          
+          doc.text(`Number of Weeks: ${weeks.length}`, 14, yPos);
+          yPos += 7;
+          
+          // Count materials across all weeks
+          let totalMaterials = 0;
+          for (const week of weeks) {
+            try {
+              const materials = await coursesAPI.getMaterialsForWeek(week.id);
+              totalMaterials += materials.length;
+            } catch (error) {
+              console.error(`Error fetching materials for week ${week.id}:`, error);
+            }
+          }
+          
+          doc.text(`Total Materials: ${totalMaterials}`, 14, yPos);
+          yPos += 15; // Add extra spacing between courses
+        } catch (error) {
+          console.error(`Error fetching weeks for course ${course.id}:`, error);
+          doc.text(`Weeks information not available`, 14, yPos);
+          yPos += 15;
+        }
+      }
+      
+      // Save the PDF
+      const filename = `course_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+      setMessage({ text: 'Report generated successfully!', severity: 'success' });
+      setShowMessage(true);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setMessage({ text: 'Failed to generate report', severity: 'error' });
+      setShowMessage(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -168,14 +264,25 @@ const CoursesList: React.FC = () => {
           {isLecturer ? 'My Courses' : 'Available Courses'}
         </Typography>
         {isLecturer && (
-          <Button 
-            variant="contained" 
-            color="primary" 
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-          >
-            Add Course
-          </Button>
+          <Box>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              startIcon={<PictureAsPdfIcon />}
+              onClick={generateReport}
+              sx={{ mr: 2 }}
+            >
+              Generate Report
+            </Button>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+            >
+              Add Course
+            </Button>
+          </Box>
         )}
       </Box>
       
