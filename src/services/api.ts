@@ -165,4 +165,59 @@ export const examsAPI = {
   }
 };
 
+// Finance API
+export const financeAPI = {
+  // Payment Announcements
+  getAllAnnouncements: async () => {
+    const response = await api.get('/finance/announcements/');
+    return response.data;
+  },
+  
+  getAnnouncementById: async (announcementId: number) => {
+    const response = await api.get(`/finance/announcements/${announcementId}`);
+    return response.data;
+  },
+  
+  createAnnouncement: async (announcementData: any) => {
+    const response = await api.post('/finance/announcements/', announcementData);
+    return response.data;
+  },
+  
+  updateAnnouncement: async (announcementId: number, announcementData: any) => {
+    const response = await api.put(`/finance/announcements/${announcementId}`, announcementData);
+    return response.data;
+  },
+  
+  deleteAnnouncement: async (announcementId: number) => {
+    const response = await api.delete(`/finance/announcements/${announcementId}`);
+    return response.data;
+  },
+  
+  // Payment Submissions
+  submitPayment: async (submissionData: any) => {
+    const response = await api.post('/finance/submissions/', submissionData);
+    return response.data;
+  },
+  
+  getMySubmissions: async () => {
+    const response = await api.get('/finance/submissions/my');
+    return response.data;
+  },
+  
+  getSubmissionsForAnnouncement: async (announcementId: number) => {
+    const response = await api.get(`/finance/submissions/announcement/${announcementId}`);
+    return response.data;
+  },
+  
+  updateSubmission: async (submissionId: number, submissionData: any) => {
+    const response = await api.put(`/finance/submissions/${submissionId}`, submissionData);
+    return response.data;
+  },
+  
+  verifySubmission: async (submissionId: number, verificationData: any) => {
+    const response = await api.put(`/finance/submissions/${submissionId}/verify`, verificationData);
+    return response.data;
+  }
+};
+
 export default api; 

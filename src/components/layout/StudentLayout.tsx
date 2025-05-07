@@ -27,6 +27,17 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
     duration: theme.transitions.duration.leavingScreen,
   }),
   marginLeft: 0,
+  height: 'calc(100vh - 64px)',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  paddingBottom: '24px',
+  '&::-webkit-scrollbar': {
+    width: '8px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: '4px',
+  },
   ...(open && {
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.easeOut,
@@ -57,6 +68,7 @@ const StudentLayout: React.FC = () => {
     { text: 'Study Materials', icon: <BookIcon />, path: '/student/materials' },
     { text: 'Exams', icon: <AssignmentIcon />, path: '/student/exams' },
     { text: 'Tuition Fee', icon: <PaymentIcon />, path: '/student/tuition' },
+    { text: 'Payments', icon: <PaymentIcon />, path: '/student/payments' },
   ];
 
   const handleDrawerToggle = () => {

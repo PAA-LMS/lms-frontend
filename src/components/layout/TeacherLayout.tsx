@@ -7,6 +7,7 @@ import {
   Book as BookIcon,
   Logout as LogoutIcon,
   Assignment as AssignmentIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +19,7 @@ const menuItems = [
   { text: 'Course Management', icon: <SchoolIcon />, path: '/teacher/courses' },
   { text: 'Study Materials', icon: <BookIcon />, path: '/teacher/materials' },
   { text: 'Exams', icon: <AssignmentIcon />, path: '/teacher/exams' },
+  { text: 'Finance', icon: <PaymentIcon />, path: '/teacher/finance' },
 ];
 
 interface TeacherLayoutProps {
@@ -147,8 +149,19 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
         sx={{
           flexGrow: 1,
           p: 3,
+          pb: 6,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+          },
         }}
       >
         {children ? children : <Outlet />}

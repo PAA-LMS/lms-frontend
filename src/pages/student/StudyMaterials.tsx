@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 interface Course {
   id: number;
@@ -251,27 +252,56 @@ const StudyMaterials: React.FC = () => {
     if (!selectedAssignment || !submissionUrl) return;
 
     setSubmissionLoading(true);
+    setSubmissionError(null); // Clear previous errors
+    
     try {
+      // Validate URL format
+      if (!submissionUrl.startsWith('https://drive.google.com/')) {
+        setSubmissionError('Please enter a valid Google Drive URL');
+        setSubmissionLoading(false);
+        return;
+      }
+      
       const token = localStorage.getItem('token');
-      await axios.post(
+      
+      // Create the submission data
+      const submissionData = {
+        assignment_id: selectedAssignment.id,
+        submission_url: submissionUrl.trim() // Trim whitespace
+      };
+      
+      console.log('Submitting assignment with data:', submissionData);
+      
+      const response = await axios.post(
         'http://localhost:8000/assignments/submit',
+        submissionData,
         {
-          assignment_id: selectedAssignment.id,
-          submission_url: submissionUrl,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
         }
       );
+      
+      console.log('Assignment submission response:', response.data);
       
       // Refresh the submission
       fetchAssignmentSubmission(selectedAssignment.id);
       
+      // Success message
+      setSubmissionError(null);
+      
       // Close the dialog
       handleCloseSubmissionDialog();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting assignment:', err);
-      setSubmissionError('Failed to submit your assignment. Please try again.');
+      
+      // Extract error message from response if available
+      const errorMessage = err.response?.data?.detail 
+        ? err.response.data.detail 
+        : 'Failed to submit your assignment. Please try again.';
+      
+      setSubmissionError(errorMessage);
     } finally {
       setSubmissionLoading(false);
     }
@@ -549,7 +579,18 @@ const StudyMaterials: React.FC = () => {
         )}
 
         {/* Assignment Submission Dialog */}
-        <Dialog open={submissionDialogOpen} onClose={handleCloseSubmissionDialog} maxWidth="sm" fullWidth>
+        <Dialog 
+          open={submissionDialogOpen} 
+          onClose={handleCloseSubmissionDialog} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              p: 1
+            }
+          }}
+        >
           <DialogTitle>
             {selectedAssignment ? `Submit Assignment: ${selectedAssignment.title}` : 'Submit Assignment'}
           </DialogTitle>
@@ -568,22 +609,27 @@ const StudyMaterials: React.FC = () => {
                 
                 {currentSubmission && (
                   <Alert severity="info" sx={{ mb: 2 }}>
-                    You have already submitted this assignment. Status: {currentSubmission.status}
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Current Submission Status: {currentSubmission.status?.toUpperCase()}
+                    </Typography>
                     {currentSubmission.grade && (
-                      <Typography component="div">
-                        Grade: {currentSubmission.grade}
+                      <Typography component="div" variant="body2">
+                        <strong>Grade:</strong> {currentSubmission.grade}
                       </Typography>
                     )}
                     {currentSubmission.feedback && (
-                      <Typography component="div">
-                        Feedback: {currentSubmission.feedback}
+                      <Typography component="div" variant="body2">
+                        <strong>Feedback:</strong> {currentSubmission.feedback}
                       </Typography>
                     )}
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      You can submit again to update your submission.
+                    </Typography>
                   </Alert>
                 )}
                 
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Please upload your assignment to Google Drive and paste the link below:
+                <Typography variant="body2" sx={{ mb: 3, mt: 1 }}>
+                  Please upload your assignment to Google Drive and paste the shared link below:
                 </Typography>
                 
                 <TextField
@@ -593,32 +639,37 @@ const StudyMaterials: React.FC = () => {
                   value={submissionUrl}
                   onChange={handleSubmissionUrlChange}
                   placeholder="https://drive.google.com/file/d/..."
-                  sx={{ mb: 2 }}
+                  sx={{ mb: 3 }}
+                  helperText="Make sure to set the sharing permissions to 'Anyone with the link can view'"
                 />
                 
                 {selectedAssignment && (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    href={selectedAssignment.content}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ mb: 2 }}
-                  >
-                    View Assignment Instructions
-                  </Button>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<DescriptionIcon />}
+                      href={selectedAssignment.content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View Assignment Instructions
+                    </Button>
+                  </Box>
                 )}
               </>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseSubmissionDialog}>Cancel</Button>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={handleCloseSubmissionDialog} color="inherit">
+              Cancel
+            </Button>
             <Button 
               onClick={handleSubmitAssignment} 
               variant="contained"
+              color="primary"
               disabled={!submissionUrl || submissionLoading}
             >
-              Submit
+              {currentSubmission ? 'Update Submission' : 'Submit Assignment'}
             </Button>
           </DialogActions>
         </Dialog>

@@ -25,6 +25,8 @@ import LoginPage from './pages/loginPage/login';
 import SignupPage from './pages/signupPage/signup';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import TeacherFinanceManagement from './pages/teacher/FinanceManagement';
+import StudentPayments from './pages/student/Payments';
 
 const theme = createTheme({
   palette: {
@@ -207,6 +209,7 @@ const AppRoutes: React.FC = () => {
         <Route path="materials" element={<StudyMaterials />} />
         <Route path="exams" element={<StudentExams />} />
         <Route path="tuition" element={<TuitionFee />} />
+        <Route path="payments" element={<StudentPayments />} />
       </Route>
 
       {/* Teacher/Lecturer Routes */}
@@ -219,6 +222,7 @@ const AppRoutes: React.FC = () => {
         <Route path="materials" element={<TeacherStudyMaterials />} />
         <Route path="course/:courseId/materials" element={<TeacherCourseMaterials />} />
         <Route path="exams" element={<TeacherExams />} />
+        <Route path="finance" element={<TeacherFinanceManagement />} />
       </Route>
 
       {/* Fallback route */}
