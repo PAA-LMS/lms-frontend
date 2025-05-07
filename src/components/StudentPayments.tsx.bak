@@ -253,18 +253,36 @@ const StudentPayments: React.FC = () => {
   }
 
   return (
-    <Box 
+    <Container 
+      maxWidth="lg" 
       sx={{ 
+        pb: 4,
+        height: 'calc(100vh - 64px - 24px)',
         width: '100%',
-        px: { xs: 2, sm: 3, md: 4 },
+        overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent'
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: theme.palette.grey[300],
+          borderRadius: '4px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: theme.palette.grey[400],
+        },
       }}
     >
       {/* Payment Announcements Section */}
       <Box 
         mb={6}
         sx={{
+          mx: 'auto',
           width: '100%',
           maxWidth: '100%'
         }}
@@ -379,7 +397,7 @@ const StudentPayments: React.FC = () => {
                           </Typography>
                           
                           <Grid container spacing={2} sx={{ mb: 2, justifyContent: 'center' }}>
-                            <Grid item xs={12} sm={6} md={3} lg={3}>
+                            <Grid item xs={12} sm={6} md={3}>
                               <Box 
                                 sx={{ 
                                   display: 'flex', 
@@ -401,7 +419,7 @@ const StudentPayments: React.FC = () => {
                               </Box>
                             </Grid>
                             
-                            <Grid item xs={12} sm={6} md={3} lg={3}>
+                            <Grid item xs={12} sm={6} md={3}>
                               <Box 
                                 sx={{ 
                                   display: 'flex', 
@@ -485,6 +503,7 @@ const StudentPayments: React.FC = () => {
       <Box 
         mt={6}
         sx={{
+          mx: 'auto',
           width: '100%',
           maxWidth: '100%'
         }}
@@ -544,7 +563,7 @@ const StudentPayments: React.FC = () => {
             </Typography>
           </Paper>
         ) : (
-          <Grid container spacing={3} sx={{ justifyContent: 'flex-start' }}>
+          <Grid container spacing={3} sx={{ justifyContent: 'start' }}>
             {mySubmissions.map(submission => {
               // Find the related announcement
               const relatedAnnouncement = announcements.find(
@@ -552,7 +571,7 @@ const StudentPayments: React.FC = () => {
               );
               
               return (
-                <Grid item xs={12} sm={6} lg={4} xl={3} key={submission.id}>
+                <Grid item xs={12} sm={6} lg={4} key={submission.id}>
                   <Card 
                     elevation={0}
                     sx={{
@@ -658,14 +677,14 @@ const StudentPayments: React.FC = () => {
                                 fontWeight: 600,
                                 display: 'flex',
                                 alignItems: 'center',
-                                fontSize: '0.85rem'
+                                fontSize: '0.9rem'
                               }}
                             >
                               {submission.status === 'verified' ? 
-                                <CheckCircleIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.success.main }} /> : 
+                                <CheckCircleIcon fontSize="small" color="success" sx={{ mr: 0.5, fontSize: '1.1rem' }} /> : 
                                 submission.status === 'rejected' ?
-                                <CancelIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.error.main }} /> :
-                                <HourglassEmptyIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.warning.main }} />
+                                <CancelIcon fontSize="small" color="error" sx={{ mr: 0.5, fontSize: '1.1rem' }} /> :
+                                <HourglassEmptyIcon fontSize="small" color="warning" sx={{ mr: 0.5, fontSize: '1.1rem' }} />
                               }
                               Feedback
                             </Typography>
@@ -997,10 +1016,10 @@ const StudentPayments: React.FC = () => {
                     }}
                   >
                     {selectedSubmission.status === 'verified' ? 
-                      <CheckCircleIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.success.main }} /> : 
+                      <CheckCircleIcon fontSize="small" color="success" sx={{ mr: 1, fontSize: '1.1rem' }} /> : 
                       selectedSubmission.status === 'rejected' ?
-                      <CancelIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.error.main }} /> :
-                      <HourglassEmptyIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.warning.main }} />
+                      <CancelIcon fontSize="small" color="error" sx={{ mr: 1, fontSize: '1.1rem' }} /> :
+                      <HourglassEmptyIcon fontSize="small" color="warning" sx={{ mr: 1, fontSize: '1.1rem' }} />
                     }
                     Verification Notes
                   </Typography>
@@ -1085,7 +1104,7 @@ const StudentPayments: React.FC = () => {
           {message.text}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 
