@@ -14,7 +14,6 @@ import Login from './pages/Login';
 import StudentDashboard from './pages/student/Dashboard';
 import CourseCatalog from './pages/student/CourseCatalog';
 import StudyMaterials from './pages/student/StudyMaterials';
-import TuitionFee from './pages/student/TuitionFee';
 import StudentExams from './pages/student/Exams';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import TeacherCourseManagement from './pages/teacher/CourseManagement';
@@ -208,7 +207,6 @@ const AppRoutes: React.FC = () => {
         <Route path="courses" element={<CourseCatalog />} />
         <Route path="materials" element={<StudyMaterials />} />
         <Route path="exams" element={<StudentExams />} />
-        <Route path="tuition" element={<TuitionFee />} />
         <Route path="payments" element={<StudentPayments />} />
       </Route>
 

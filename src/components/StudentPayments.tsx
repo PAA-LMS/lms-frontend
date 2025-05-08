@@ -256,14 +256,17 @@ const StudentPayments: React.FC = () => {
     <Box 
       sx={{ 
         width: '100%',
-        px: { xs: 2, sm: 3, md: 4 },
+        px: { xs: 3, sm: 5, md: 7 },
+        py: { xs: 4, md: 5 },
         display: 'flex',
         flexDirection: 'column',
+        maxWidth: '1600px',
+        mx: 'auto',
       }}
     >
       {/* Payment Announcements Section */}
       <Box 
-        mb={6}
+        mb={10}
         sx={{
           width: '100%',
           maxWidth: '100%'
@@ -274,9 +277,10 @@ const StudentPayments: React.FC = () => {
           component="h2" 
           gutterBottom
           sx={{ 
-            fontWeight: 600, 
-            mb: 3,
-            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' } 
+            fontWeight: 700,
+            mb: 5,
+            fontSize: { xs: '1.6rem', sm: '1.8rem', md: '2.2rem' },
+            textAlign: 'center',
           }}
         >
           Payment Announcements
@@ -303,7 +307,7 @@ const StudentPayments: React.FC = () => {
             </Typography>
           </Paper>
         ) : (
-          <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
+          <Grid container spacing={5} sx={{ justifyContent: 'center' }}>
             {announcements.map(announcement => {
               const submitted = hasSubmittedFor(announcement.id);
               const status = getSubmissionStatus(announcement.id);
@@ -313,29 +317,31 @@ const StudentPayments: React.FC = () => {
                   <Card 
                     elevation={0}
                     sx={{
-                      borderRadius: 3,
+                      borderRadius: 4,
                       overflow: 'hidden',
                       border: `1px solid ${theme.palette.grey[200]}`,
                       '&:hover': {
-                        boxShadow: '0 5px 15px rgba(0,0,0,0.08)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.07)',
                       },
                       transition: 'box-shadow 0.3s ease-in-out',
                       display: 'flex',
-                      flexDirection: 'column'
+                      flexDirection: 'column',
+                      maxWidth: '1200px',
+                      mx: 'auto',
                     }}
                   >
                     <Box
                       sx={{
                         position: 'relative',
-                        pb: submitted ? 3 : 0,
+                        pb: submitted ? 4 : 0,
                       }}
                     >
                       {submitted && (
                         <Box
                           sx={{
                             position: 'absolute',
-                            top: 16,
-                            right: 16,
+                            top: 24,
+                            right: 24,
                             zIndex: 1,
                           }}
                         >
@@ -345,23 +351,28 @@ const StudentPayments: React.FC = () => {
                             color={getStatusColor(status || 'pending') as 'success' | 'warning' | 'error'}
                             sx={{ 
                               fontWeight: 600,
-                              px: 1
+                              px: 2,
+                              py: 0.5,
+                              fontSize: '0.85rem',
+                              borderRadius: '16px',
                             }}
                           />
                         </Box>
                       )}
                     
-                      <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ maxWidth: '800px', mx: 'auto', width: '100%' }}>
+                      <CardContent sx={{ p: { xs: 3, sm: 4, md: 5 } }}>
+                        <Box sx={{ maxWidth: '900px', mx: 'auto', width: '100%' }}>
                           <Typography 
                             variant="h6" 
                             component="h3" 
                             gutterBottom
                             sx={{ 
-                              fontWeight: 600,
-                              mb: 2,
-                              pr: submitted ? 8 : 0, // Space for the status chip
-                              textAlign: 'center'
+                              fontWeight: 700,
+                              mb: 4,
+                              pr: submitted ? 12 : 0,
+                              textAlign: 'center',
+                              fontSize: { xs: '1.2rem', md: '1.4rem' },
+                              lineHeight: 1.4,
                             }}
                           >
                             {announcement.title}
@@ -371,52 +382,59 @@ const StudentPayments: React.FC = () => {
                             color="textSecondary" 
                             paragraph
                             sx={{ 
-                              mb: 3,
-                              textAlign: 'center'
+                              mb: 5,
+                              textAlign: 'center',
+                              px: { xs: 1, sm: 4, md: 6 },
+                              maxWidth: '800px',
+                              mx: 'auto',
+                              fontSize: '1rem',
+                              lineHeight: 1.7,
                             }}
                           >
                             {announcement.description}
                           </Typography>
                           
-                          <Grid container spacing={2} sx={{ mb: 2, justifyContent: 'center' }}>
-                            <Grid item xs={12} sm={6} md={3} lg={3}>
+                          <Grid container spacing={4} sx={{ mb: 4, justifyContent: 'center' }}>
+                            <Grid item xs={12} sm={6} md={4} lg={3}>
                               <Box 
                                 sx={{ 
                                   display: 'flex', 
                                   alignItems: 'center',
                                   backgroundColor: theme.palette.primary.main + '10',
-                                  p: 1.5,
-                                  borderRadius: 2
+                                  p: 2.5,
+                                  borderRadius: 3,
+                                  height: '100%',
                                 }}
                               >
-                                <PaymentIcon color="primary" sx={{ mr: 1, opacity: 0.7, fontSize: '1.2rem' }} />
+                                <PaymentIcon color="primary" sx={{ mr: 2, opacity: 0.8, fontSize: '1.4rem' }} />
                                 <Box>
-                                  <Typography variant="caption" color="textSecondary">
+                                  <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
                                     Amount
                                   </Typography>
-                                  <Typography variant="body1" fontWeight={600}>
+                                  <Typography variant="body1" fontWeight={700} sx={{ fontSize: '1.1rem' }}>
                                     {announcement.amount}
                                   </Typography>
                                 </Box>
                               </Box>
                             </Grid>
                             
-                            <Grid item xs={12} sm={6} md={3} lg={3}>
+                            <Grid item xs={12} sm={6} md={4} lg={3}>
                               <Box 
                                 sx={{ 
                                   display: 'flex', 
                                   alignItems: 'center',
                                   backgroundColor: theme.palette.error.main + '10',
-                                  p: 1.5,
-                                  borderRadius: 2
+                                  p: 2.5,
+                                  borderRadius: 3,
+                                  height: '100%',
                                 }}
                               >
-                                <EventIcon color="error" sx={{ mr: 1, opacity: 0.7, fontSize: '1.2rem' }} />
+                                <EventIcon color="error" sx={{ mr: 2, opacity: 0.8, fontSize: '1.4rem' }} />
                                 <Box>
-                                  <Typography variant="caption" color="textSecondary">
+                                  <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
                                     Due Date
                                   </Typography>
-                                  <Typography variant="body1" fontWeight={600}>
+                                  <Typography variant="body1" fontWeight={700} sx={{ fontSize: '1.1rem' }}>
                                     {formatDate(announcement.due_date)}
                                   </Typography>
                                 </Box>
@@ -424,15 +442,16 @@ const StudentPayments: React.FC = () => {
                             </Grid>
                           </Grid>
                           
-                          <Box mt={3}>
+                          <Box mt={5} mb={2}>
                             <Typography 
                               variant="subtitle2" 
                               sx={{ 
-                                mb: 1.5, 
+                                mb: 3,
                                 fontWeight: 600,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                fontSize: '1rem',
                               }}
                             >
                               Payment Details
@@ -440,14 +459,15 @@ const StudentPayments: React.FC = () => {
                             <Paper 
                               variant="outlined" 
                               sx={{ 
-                                p: 2, 
-                                borderRadius: 2, 
+                                p: 4,
+                                borderRadius: 3,
                                 backgroundColor: theme.palette.grey[50],
-                                maxHeight: '150px',
-                                overflow: 'auto'
+                                maxHeight: '180px',
+                                overflow: 'auto',
+                                mx: { xs: 0, sm: 3, md: 6 },
                               }}
                             >
-                              <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                              <Typography variant="body2" sx={{ lineHeight: 1.8, fontSize: '0.95rem' }}>
                                 {announcement.payment_details}
                               </Typography>
                             </Paper>
@@ -455,18 +475,19 @@ const StudentPayments: React.FC = () => {
                         </Box>
                       </CardContent>
                       
-                      <CardActions sx={{ px: 3, pb: 3, pt: 0, justifyContent: 'center' }}>
+                      <CardActions sx={{ px: 4, pb: 5, pt: 2, justifyContent: 'center' }}>
                         <Button 
                           variant="contained" 
                           color={submitted ? "secondary" : "primary"}
                           onClick={() => handleOpenSubmitDialog(announcement)}
                           startIcon={submitted ? <DescriptionIcon /> : <AddCircleIcon />}
                           sx={{ 
-                            borderRadius: 2,
-                            px: 3,
-                            py: 1,
-                            fontWeight: 500,
-                            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
+                            borderRadius: 3,
+                            px: 5,
+                            py: 1.5,
+                            fontWeight: 600,
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+                            fontSize: '0.95rem',
                           }}
                         >
                           {submitted ? "View Submission" : "Submit Payment"}
@@ -483,41 +504,41 @@ const StudentPayments: React.FC = () => {
       
       {/* My Submissions Section */}
       <Box 
-        mt={6}
+        mt={10}
         sx={{
           width: '100%',
           maxWidth: '100%'
         }}
       >
-        <Box mb={3} display="flex" alignItems="center" justifyContent="center">
+        <Box mb={5} display="flex" alignItems="center" justifyContent="center">
           <Typography 
             variant="h5" 
             component="h2" 
             sx={{ 
-              fontWeight: 600,
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' } 
+              fontWeight: 700,
+              fontSize: { xs: '1.6rem', sm: '1.8rem', md: '2.2rem' },
             }}
           >
             My Payment Submissions
           </Typography>
           <Box 
             sx={{ 
-              ml: 2, 
+              ml: 2.5,
               bgcolor: theme.palette.grey[200], 
               borderRadius: '50%',
-              width: 28,
-              height: 28,
+              width: 36,
+              height: 36,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Typography variant="body2" fontWeight={600}>
+            <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.95rem' }}>
               {mySubmissions.length}
             </Typography>
           </Box>
         </Box>
-        <Divider sx={{ mb: 4 }} />
+        <Divider sx={{ mb: 6 }} />
         
         {submissionsLoading ? (
           <Box display="flex" justifyContent="center" p={3}>
@@ -544,7 +565,7 @@ const StudentPayments: React.FC = () => {
             </Typography>
           </Paper>
         ) : (
-          <Grid container spacing={3} sx={{ justifyContent: 'flex-start' }}>
+          <Grid container spacing={5} sx={{ justifyContent: 'flex-start' }}>
             {mySubmissions.map(submission => {
               // Find the related announcement
               const relatedAnnouncement = announcements.find(
@@ -552,11 +573,11 @@ const StudentPayments: React.FC = () => {
               );
               
               return (
-                <Grid item xs={12} sm={6} lg={4} xl={3} key={submission.id}>
+                <Grid item xs={12} sm={6} md={4} key={submission.id}>
                   <Card 
                     elevation={0}
                     sx={{
-                      borderRadius: 3,
+                      borderRadius: 4,
                       overflow: 'hidden',
                       height: '100%',
                       border: `1px solid ${theme.palette.grey[200]}`,
@@ -564,7 +585,7 @@ const StudentPayments: React.FC = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       '&:hover': {
-                        boxShadow: '0 5px 15px rgba(0,0,0,0.08)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.07)',
                       },
                       transition: 'box-shadow 0.3s ease-in-out',
                       width: '100%'
@@ -574,13 +595,13 @@ const StudentPayments: React.FC = () => {
                       sx={{ 
                         bgcolor: (theme) => {
                           switch(submission.status) {
-                            case 'verified': return theme.palette.success.main + '08';
-                            case 'rejected': return theme.palette.error.main + '08';
-                            default: return theme.palette.warning.main + '08';
+                            case 'verified': return theme.palette.success.main + '12';
+                            case 'rejected': return theme.palette.error.main + '12';
+                            default: return theme.palette.warning.main + '12';
                           }
                         },
-                        px: 3,
-                        py: 2,
+                        px: 3.5,
+                        py: 3,
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
@@ -588,12 +609,13 @@ const StudentPayments: React.FC = () => {
                     >
                       <Typography 
                         variant="subtitle1" 
-                        fontWeight={600}
+                        fontWeight={700}
                         sx={{ 
                           overflow: 'hidden', 
                           textOverflow: 'ellipsis', 
                           whiteSpace: 'nowrap',
-                          maxWidth: 'calc(100% - 80px)',
+                          maxWidth: 'calc(100% - 100px)',
+                          fontSize: '1rem',
                         }}
                       >
                         {relatedAnnouncement?.title || 'Payment'}
@@ -603,46 +625,46 @@ const StudentPayments: React.FC = () => {
                         label={submission.status.toUpperCase()} 
                         color={getStatusColor(submission.status)} 
                         size="small"
-                        sx={{ fontWeight: 600 }}
+                        sx={{ fontWeight: 600, ml: 1.5, borderRadius: '12px', py: 0.3 }}
                       />
                     </Box>
                     
-                    <CardContent sx={{ p: 3, flexGrow: 1 }}>
-                      <Grid container spacing={2}>
+                    <CardContent sx={{ p: 4, flexGrow: 1 }}>
+                      <Grid container spacing={4}>
                         <Grid item xs={6}>
-                          <Typography variant="caption" color="textSecondary">
+                          <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
                             Amount Paid
                           </Typography>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.95rem' }}>
                             {submission.amount_paid}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="caption" color="textSecondary">
+                          <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
                             Payment Date
                           </Typography>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.95rem' }}>
                             {formatDate(submission.payment_date)}
                           </Typography>
                         </Grid>
                       </Grid>
                       
-                      <Box mt={2}>
-                        <Typography variant="caption" color="textSecondary">
+                      <Box mt={4}>
+                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
                           Submitted On
                         </Typography>
-                        <Typography variant="body2" fontWeight={500}>
+                        <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.95rem' }}>
                           {formatDate(submission.submitted_at)}
                         </Typography>
                       </Box>
                       
                       {submission.verification_notes && (
                         <>
-                          <Divider sx={{ mt: 3, mb: 1 }} />
+                          <Divider sx={{ mt: 5, mb: 3 }} />
                           <Box 
                             mt={3}
                             sx={{ 
-                              borderRadius: 2,
+                              borderRadius: 3,
                               display: 'flex',
                               flexDirection: 'column',
                               width: '100%',
@@ -654,30 +676,30 @@ const StudentPayments: React.FC = () => {
                               color="textSecondary" 
                               display="block" 
                               sx={{ 
-                                mb: 1.5,
+                                mb: 2.5,
                                 fontWeight: 600,
                                 display: 'flex',
                                 alignItems: 'center',
-                                fontSize: '0.85rem'
+                                fontSize: '0.88rem'
                               }}
                             >
                               {submission.status === 'verified' ? 
-                                <CheckCircleIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.success.main }} /> : 
+                                <CheckCircleIcon sx={{ mr: 1, fontSize: '1rem', color: theme.palette.success.main }} /> : 
                                 submission.status === 'rejected' ?
-                                <CancelIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.error.main }} /> :
-                                <HourglassEmptyIcon sx={{ mr: 0.5, fontSize: '0.9rem', color: theme.palette.warning.main }} />
+                                <CancelIcon sx={{ mr: 1, fontSize: '1rem', color: theme.palette.error.main }} /> :
+                                <HourglassEmptyIcon sx={{ mr: 1, fontSize: '1rem', color: theme.palette.warning.main }} />
                               }
                               Feedback
                             </Typography>
                             <Paper
                               elevation={0}
                               sx={{ 
-                                p: 3, 
-                                borderRadius: 1.5,
+                                p: 3.5,
+                                borderRadius: 2.5,
                                 bgcolor: submission.status === 'verified' 
-                                  ? theme.palette.success.light + '12'
+                                  ? theme.palette.success.light + '15'
                                   : submission.status === 'rejected'
-                                    ? theme.palette.error.light + '12'
+                                    ? theme.palette.error.light + '15'
                                     : theme.palette.grey[100],
                                 border: `1px solid ${
                                   submission.status === 'verified' 
@@ -702,8 +724,8 @@ const StudentPayments: React.FC = () => {
                                 sx={{
                                   wordBreak: 'break-word',
                                   whiteSpace: 'pre-wrap',
-                                  lineHeight: 1.7,
-                                  fontSize: '1rem',
+                                  lineHeight: 1.9,
+                                  fontSize: '0.95rem',
                                   fontWeight: 500
                                 }}
                               >
@@ -715,7 +737,7 @@ const StudentPayments: React.FC = () => {
                       )}
                     </CardContent>
                     
-                    <CardActions sx={{ px: 3, pb: 3, pt: submission.verification_notes ? 2 : 0 }}>
+                    <CardActions sx={{ px: 4, pb: 4, pt: submission.verification_notes ? 2 : 0 }}>
                       <Button 
                         variant="outlined" 
                         fullWidth
@@ -723,7 +745,7 @@ const StudentPayments: React.FC = () => {
                         href={submission.payment_slip_url} 
                         target="_blank"
                         rel="noopener noreferrer"
-                        sx={{ borderRadius: 2 }}
+                        sx={{ borderRadius: 3, py: 1.2, fontWeight: 600 }}
                       >
                         View Payment Slip
                       </Button>
@@ -745,35 +767,35 @@ const StudentPayments: React.FC = () => {
         fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: isMobile ? 0 : 3,
+            borderRadius: isMobile ? 0 : 4,
             p: isMobile ? 1 : 0,
             height: isMobile ? '100%' : 'auto',
             maxHeight: isMobile ? '100%' : '90vh'
           }
         }}
       >
-        <DialogTitle sx={{ px: 3, py: 2 }}>
-          <Typography variant="h6" component="div" fontWeight={600}>
+        <DialogTitle sx={{ px: 4, py: 3 }}>
+          <Typography variant="h6" component="div" fontWeight={700} sx={{ fontSize: '1.2rem' }}>
             Submit Payment for {selectedAnnouncement?.title}
           </Typography>
         </DialogTitle>
         <Divider />
-        <DialogContent sx={{ px: 3, py: 2, overflowY: 'auto' }}>
-          <Box mb={3} p={2} bgcolor={theme.palette.grey[50]} borderRadius={2}>
-            <Grid container spacing={2}>
+        <DialogContent sx={{ px: 4, py: 3, overflowY: 'auto' }}>
+          <Box mb={4} p={3} bgcolor={theme.palette.grey[50]} borderRadius={3}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="caption" color="textSecondary">
+                <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
                   Amount
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
+                <Typography variant="body1" fontWeight={700} sx={{ fontSize: '1.1rem' }}>
                   {selectedAnnouncement?.amount}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="caption" color="textSecondary">
+                <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
                   Due Date
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>
+                <Typography variant="body1" fontWeight={700} sx={{ fontSize: '1.1rem' }}>
                   {selectedAnnouncement ? formatDate(selectedAnnouncement.due_date) : ''}
                 </Typography>
               </Grid>
